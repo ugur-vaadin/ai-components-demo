@@ -6,6 +6,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import com.vaadin.flow.component.dependency.StyleSheet;
 import com.vaadin.flow.component.page.AppShellConfigurator;
+import com.vaadin.flow.component.page.Push;
 
 @SpringBootApplication(scanBasePackages = {
     "com.vaadin.base",
@@ -14,6 +15,7 @@ import com.vaadin.flow.component.page.AppShellConfigurator;
 @StyleSheet(Lumo.STYLESHEET) // Use Aura.STYLESHEET to use Aura instead
 @StyleSheet(Lumo.UTILITY_STYLESHEET)
 @StyleSheet("styles.css") // Your custom styles
+@Push
 public class Application implements AppShellConfigurator {
 
     public static void main(String[] args) {
