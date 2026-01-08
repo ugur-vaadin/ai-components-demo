@@ -31,14 +31,6 @@ import java.io.Serializable;
 public interface AiFileReceiver extends Serializable {
 
     /**
-     * Adds a listener for successful upload events.
-     *
-     * @param listener
-     *            the listener to add
-     */
-    void addSucceededListener(FileUploadListener listener);
-
-    /**
      * Sets the upload handler for this file receiver.
      * <p>
      * The upload handler processes uploaded files and stores them in memory or

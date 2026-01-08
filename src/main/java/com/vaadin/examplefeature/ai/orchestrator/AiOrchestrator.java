@@ -16,6 +16,8 @@
 package com.vaadin.examplefeature.ai.orchestrator;
 
 import com.vaadin.examplefeature.ai.input.InputSubmitEvent;
+import com.vaadin.examplefeature.ai.input.InputSubmitListener;
+import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.UI;
 import com.vaadin.examplefeature.ai.input.AiInput;
 import com.vaadin.examplefeature.ai.messagelist.AiMessage;
@@ -24,6 +26,10 @@ import com.vaadin.examplefeature.ai.provider.LLMProvider;
 import com.vaadin.examplefeature.ai.upload.AiFileReceiver;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.messages.MessageInput;
+import com.vaadin.flow.component.messages.MessageList;
+import com.vaadin.flow.component.messages.MessageListItem;
+import com.vaadin.flow.component.upload.Upload;
 import com.vaadin.flow.server.streams.UploadHandler;
 import dev.langchain4j.agent.tool.Tool;
 import reactor.core.publisher.Flux;
@@ -31,6 +37,7 @@ import reactor.core.publisher.Flux;
 import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -153,6 +160,84 @@ public class AiOrchestrator implements Serializable {
     }
 
     /**
+     * Sets the message list component.
+     *
+     * @param messageList
+     *            the message list
+     */
+    protected void setMessageList(MessageList messageList) {
+        this.messageList = wrapMessageList(messageList);
+    }
+
+    private static AiMessageList wrapMessageList(MessageList messageList) {
+        return new AiMessageList() {
+            @Override
+            public void addMessage(AiMessage message) {
+                if (message instanceof MessageListItemWrapper messageListItemWrapper) {
+                    messageList.addItem(messageListItemWrapper.getItem());
+                } else {
+                    var item = new MessageListItem();
+                    item.setText(message.getText());
+                    item.setTime(message.getTime());
+                    item.setUserName(message.getUserName());
+                    messageList.addItem(item);
+                }
+            }
+
+            @Override
+            public AiMessage createMessage(String text, String userName) {
+                return new MessageListItemWrapper(text, userName);
+            }
+        };
+    }
+
+    /**
+     * Wrapper class that adapts MessageListItem to AiMessage interface.
+     */
+    private static class MessageListItemWrapper implements AiMessage {
+        private final MessageListItem item;
+
+        public MessageListItemWrapper(String text, String userName) {
+            item = new MessageListItem(text, Instant.now(), userName);
+        }
+
+        public MessageListItem getItem() {
+            return item;
+        }
+
+        @Override
+        public String getText() {
+            return item.getText();
+        }
+
+        @Override
+        public void setText(String text) {
+            item.setText(text);
+        }
+
+        @Override
+        public Instant getTime() {
+            return item.getTime();
+        }
+
+        @Override
+        public String getUserName() {
+            return item.getUserName();
+        }
+
+        @Override
+        public void appendText(String token) {
+            item.appendText(token);
+        }
+
+        @Override
+        public void setPrefix(Component component) {
+            // TODO should be implemented in component
+            // item.setPrefix(component);
+        }
+    }
+
+    /**
      * Sets the input component.
      *
      * @param input
@@ -163,6 +248,28 @@ public class AiOrchestrator implements Serializable {
     }
 
     /**
+     * Sets the input component.
+     *
+     * @param messageInput
+     *            the message input component
+     */
+    protected void setInput(MessageInput messageInput) {
+        this.input = wrapInput(messageInput);
+    }
+
+    private static AiInput wrapInput(MessageInput messageInput) {
+        return new AiInput() {
+            @Override
+            public void addSubmitListener(InputSubmitListener listener) {
+                messageInput.addSubmitListener(event -> {
+                    InputSubmitEvent submitEvent = event::getValue;
+                    listener.onSubmit(submitEvent);
+                });
+            }
+        };
+    }
+
+    /**
      * Sets the file receiver component.
      *
      * @param fileReceiver
@@ -170,6 +277,35 @@ public class AiOrchestrator implements Serializable {
      */
     protected void setFileReceiver(AiFileReceiver fileReceiver) {
         this.fileReceiver = fileReceiver;
+    }
+
+    /**
+     * Sets the file receiver component.
+     *
+     * @param upload
+     *            the upload component
+     */
+    protected void setFileReceiver(Upload upload) {
+        this.fileReceiver = wrapUpload(upload);
+    }
+
+    private static AiFileReceiver wrapUpload(Upload upload) {
+        return new AiFileReceiver() {
+            @Override
+            public void setUploadHandler(UploadHandler uploadHandler) {
+                upload.setUploadHandler(uploadHandler);
+            }
+
+            @Override
+            public void addFileRemovedListener(java.util.function.Consumer<String> listener) {
+                upload.addFileRemovedListener(event -> listener.accept(event.getFileName()));
+            }
+
+            @Override
+            public void clearFileList() {
+                upload.clearFileList();
+            }
+        };
     }
 
     /**
@@ -278,8 +414,8 @@ public class AiOrchestrator implements Serializable {
      *            successfully (can be null)
      */
     protected void streamResponseToMessage(LLMProvider.LLMRequest request,
-            AiMessage assistantMessage, Runnable onComplete) {
-    
+                                           AiMessage assistantMessage, Runnable onComplete) {
+
         Flux<String> responseStream = provider.stream(request);
 
         responseStream.subscribe(token -> {
@@ -318,8 +454,8 @@ public class AiOrchestrator implements Serializable {
      *            callback when streaming completes
      */
     protected void streamResponse(LLMProvider.LLMRequest request,
-            Consumer<String> onToken, Consumer<Throwable> onError,
-            Runnable onComplete) {
+                                  Consumer<String> onToken, Consumer<Throwable> onError,
+                                  Runnable onComplete) {
         Flux<String> responseStream = provider.stream(request);
         responseStream.subscribe(onToken::accept, onError::accept,
                 onComplete);
@@ -739,6 +875,18 @@ public class AiOrchestrator implements Serializable {
         }
 
         /**
+         * Sets the message list component using a Flow MessageList component.
+         *
+         * @param messageList
+         *            the Flow MessageList component
+         * @return this builder
+         */
+        public Builder withMessageList(MessageList messageList) {
+            this.messageList = wrapMessageList(messageList);
+            return this;
+        }
+
+        /**
          * Sets the input component.
          *
          * @param input
@@ -751,6 +899,18 @@ public class AiOrchestrator implements Serializable {
         }
 
         /**
+         * Sets the input component using a Flow MessageInput component.
+         *
+         * @param messageInput
+         *            the Flow MessageInput component
+         * @return this builder
+         */
+        public Builder withInput(MessageInput messageInput) {
+            this.input = wrapInput(messageInput);
+            return this;
+        }
+
+        /**
          * Sets the file receiver component for file uploads.
          *
          * @param fileReceiver
@@ -759,6 +919,18 @@ public class AiOrchestrator implements Serializable {
          */
         public Builder withFileReceiver(AiFileReceiver fileReceiver) {
             this.fileReceiver = fileReceiver;
+            return this;
+        }
+
+        /**
+         * Sets the file receiver component using a Flow Upload component.
+         *
+         * @param upload
+         *            the Flow Upload component
+         * @return this builder
+         */
+        public Builder withFileReceiver(Upload upload) {
+            this.fileReceiver = wrapUpload(upload);
             return this;
         }
 
@@ -834,10 +1006,6 @@ public class AiOrchestrator implements Serializable {
             // Configure input listener if provided
             if (input != null) {
                 input.addSubmitListener(orchestrator::handleUserInput);
-            }
-
-            if (messageList != null) {
-                messageList.setMarkdown(true);
             }
 
             // Configure file receiver if provided
