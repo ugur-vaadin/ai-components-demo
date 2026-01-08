@@ -1,12 +1,12 @@
 package com.vaadin.examplefeature.ui;
 
-import com.vaadin.examplefeature.ai.input.MessageInputWrapper;
-import com.vaadin.examplefeature.ai.messagelist.MessageListWrapper;
 import com.vaadin.examplefeature.ai.orchestrator.AiOrchestrator;
 import com.vaadin.examplefeature.ai.provider.langchain4j.LangChain4JLLMProvider;
-import com.vaadin.examplefeature.ai.upload.UploadWrapper;
 import com.vaadin.flow.component.dependency.CssImport;
+import com.vaadin.flow.component.messages.MessageInput;
+import com.vaadin.flow.component.messages.MessageList;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.upload.Upload;
 import com.vaadin.flow.router.Menu;
 import com.vaadin.flow.router.Route;
 import dev.langchain4j.agent.tool.Tool;
@@ -21,12 +21,12 @@ public class AiChatDemoView extends VerticalLayout {
         setSizeFull();
 
         // Create UI components
-        var messageList = new MessageListWrapper();
+        var messageList = new MessageList();
         messageList.setSizeFull();
-        var messageInput = new MessageInputWrapper();
+        var messageInput = new MessageInput();
 
         // Upload Component for attachments
-        var upload = new UploadWrapper();
+        var upload = new Upload();
         upload.setWidthFull();
         upload.setMaxFiles(5);
         upload.setMaxFileSize(5 * 1024 * 1024); // 5 MB
