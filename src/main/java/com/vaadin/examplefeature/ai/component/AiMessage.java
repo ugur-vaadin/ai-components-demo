@@ -13,9 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.vaadin.examplefeature.ai.messagelist;
-
-import com.vaadin.flow.component.Component;
+package com.vaadin.examplefeature.ai.component;
 
 import java.io.Serializable;
 import java.time.Instant;
@@ -24,6 +22,7 @@ import java.time.Instant;
  * Represents a message in an AI conversation.
  *
  * @author Vaadin Ltd
+ * @see AiMessageList
  */
 public interface AiMessage extends Serializable {
 
@@ -38,14 +37,14 @@ public interface AiMessage extends Serializable {
      * Sets the message text.
      *
      * @param text
-     *            the message text
+     *            the message text to set
      */
     void setText(String text);
 
     /**
      * Gets the timestamp of the message.
      *
-     * @return the timestamp
+     * @return the timestamp when the message was created
      */
     Instant getTime();
 
@@ -58,11 +57,12 @@ public interface AiMessage extends Serializable {
 
     /**
      * Appends text to the existing message content.
+     * <p>
+     * This method is used for streaming AI responses where tokens are appended
+     * incrementally as they arrive.
      *
      * @param token
      *            the text to append
      */
     void appendText(String token);
-
-    void setPrefix(Component component);
 }

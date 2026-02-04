@@ -1,7 +1,7 @@
 package com.vaadin.examplefeature.ui;
 
 import com.vaadin.examplefeature.ai.orchestrator.AiOrchestrator;
-import com.vaadin.examplefeature.ai.provider.langchain4j.LangChain4JLLMProvider;
+import com.vaadin.examplefeature.ai.provider.LangChain4JLLMProvider;
 import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.flow.component.messages.MessageInput;
 import com.vaadin.flow.component.messages.MessageList;
@@ -58,7 +58,7 @@ public class AiChatDemoView extends VerticalLayout {
                 .withMessageList(messageList)
                 .withInput(messageInput)
                 .withFileReceiver(upload)
-                .withVendorToolObjects(returnTools)
+                .withTools(returnTools)
                 .build();
     }
 

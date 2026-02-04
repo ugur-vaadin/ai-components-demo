@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2025 Vaadin Ltd.
+ * Copyright 2000-2026 Vaadin Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,26 +13,23 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.vaadin.examplefeature.ai.input;
+package com.vaadin.examplefeature.ai.component;
 
 import java.io.Serializable;
 
 /**
- * Interface for components that can be used as input for AI orchestrators.
- * <p>
- * Components implementing this interface can receive user input and notify
- * listeners when the user submits a message.
- * </p>
+ * Event fired when a user submits input.
  *
  * @author Vaadin Ltd
+ * @see InputSubmitListener
+ * @see AiInput
  */
-public interface AiInput extends Serializable {
+public interface InputSubmitEvent extends Serializable {
 
     /**
-     * Adds a listener for submit events.
+     * Gets the submitted value.
      *
-     * @param listener
-     *            the listener to add
+     * @return the submitted value
      */
-    void addSubmitListener(InputSubmitListener listener);
+    String getValue();
 }

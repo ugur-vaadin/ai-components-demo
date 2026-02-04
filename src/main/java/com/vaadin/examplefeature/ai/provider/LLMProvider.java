@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2025 Vaadin Ltd.
+ * Copyright 2000-2026 Vaadin Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,273 +15,96 @@
  */
 package com.vaadin.examplefeature.ai.provider;
 
-import reactor.core.publisher.Flux;
-
 import java.io.Serializable;
 import java.util.List;
 
+import reactor.core.publisher.Flux;
+
 /**
- * Framework-agnostic interface for Large Language Model providers.
- * <p>
- * This interface can be used by any AI-powered component to communicate with
- * LLMs, not just chat components. Implementations handle conversation memory
- * internally, managing conversation context per provider instance.
- * </p>
+ * Framework-agnostic interface for Large Language Model (LLM) providers. This
+ * interface enables AI-powered components to communicate with LLMs without
+ * being tied to a specific implementation. Implementations are responsible for
+ * managing conversation memory, handling streaming responses, processing
+ * vendor-specific tool annotations, and handling file attachments.
  *
- * @author Vaadin Ltd
+ * @author Vaadin Ltd.
  */
 public interface LLMProvider extends Serializable {
 
     /**
-     * Streams a response from the LLM based on the provided request.
+     * Streams a response from the LLM based on the provided request. This
+     * method returns a reactive stream that emits response tokens as they
+     * become available from the LLM. The provider manages conversation history
+     * internally, so each call to this method adds to the ongoing conversation
+     * context.
      *
      * @param request
-     *            The LLM request containing user message, context, and
-     *            configuration
-     * @return A Flux stream of response tokens
+     *            the LLM request containing user message, system prompt,
+     *            attachments, and tools, not {@code null}
+     * @return a Flux stream that emits response tokens as strings, never
+     *         {@code null}
+     * @throws NullPointerException
+     *             if request is {@code null}
      */
     Flux<String> stream(LLMRequest request);
 
     /**
-     * Sets the default system prompt for this provider. This will be used for
-     * all requests unless overridden in the request itself.
-     *
-     * @param systemPrompt
-     *            The system prompt
-     */
-    default void setSystemPrompt(String systemPrompt) {
-        // Default implementation does nothing
-    }
-
-    /**
-     * Represents a tool that can be called by the LLM.
-     */
-    interface Tool extends Serializable {
-        /**
-         * Gets the name of the tool.
-         *
-         * @return the tool name
-         */
-        String getName();
-
-        /**
-         * Gets the description of what the tool does. This should clearly
-         * explain the tool's purpose and parameters.
-         *
-         * @return the tool description
-         */
-        String getDescription();
-
-        /**
-         * Gets the JSON schema for the tool's parameters. Can be null if the
-         * tool has no parameters.
-         *
-         * @return the parameters schema as a JSON string, or null
-         */
-        String getParametersSchema();
-
-        /**
-         * Executes the tool with the given arguments.
-         *
-         * @param arguments
-         *            the tool arguments as a JSON string
-         * @return the tool execution result
-         */
-        String execute(String arguments);
-    }
-
-    /**
-     * Represents a request to the LLM with all necessary context and
-     * configuration.
+     * Represents a request to the LLM containing all necessary context,
+     * configuration, and tools. Requests are immutable.
      */
     interface LLMRequest extends Serializable {
         /**
-         * Gets the user message.
+         * Gets the user's message.
          *
-         * @return the user message
+         * @return the user message, never {@code null}
          */
         String userMessage();
 
         /**
-         * Gets the list of attachments.
+         * Gets the list of file attachments to include with the request.
+         * Attachments can be images, PDFs, text files, or other supported
+         * formats that the LLM can analyze and reference in its response.
          *
-         * @return the attachments
+         * @return the list of attachments, never {@code null} but may be empty
          */
         List<Attachment> attachments();
 
         /**
-         * Gets the system prompt for this request. If null, the provider
-         * should use its default system prompt.
+         * Gets the system prompt for this specific request. The system prompt
+         * defines the LLM's behavior, role, and constraints. If {@code null},
+         * the provider may use its own internal default system prompt.
          *
-         * @return the system prompt
+         * @return the system prompt, or {@code null} if not specified
          */
         String systemPrompt();
 
         /**
-         * Gets the tools available for this request.
+         * Gets the tool objects for this request. Tool objects are classes with
+         * vendor-specific annotations (e.g., LangChain4j's {@code @Tool},
+         * Spring AI's {@code @Tool}) that the provider can introspect and
+         * convert to native tool definitions.
          *
-         * @return the tools
+         * @return array of tool objects, never {@code null} but may be empty
          */
-        Tool[] tools();
-
-        Object[] toolObjects();
-
-        /**
-         * Creates a simple LLM request with just a user message.
-         *
-         * @param userMessage
-         *            the user message
-         * @return a new LLMRequest instance
-         */
-        static LLMRequest of(String userMessage) {
-            return new LLMRequest() {
-                @Override
-                public String userMessage() {
-                    return userMessage;
-                }
-
-                @Override
-                public List<Attachment> attachments() {
-                    return List.of();
-                }
-
-                @Override
-                public String systemPrompt() {
-                    return null;
-                }
-
-                @Override
-                public Tool[] tools() {
-                    return new Tool[0];
-                }
-
-                @Override
-                public Object[] toolObjects() {
-                    return new Object[0];
-                }
-            };
-        }
+        Object[] tools();
     }
 
     /**
-     * Builder for creating LLMRequest instances with a fluent API.
-     */
-    class LLMRequestBuilder implements Serializable {
-        private String userMessage;
-        private List<Attachment> attachments = List.of();
-        private String systemPrompt;
-        private Tool[] tools = new Tool[0];
-        private Object[] toolObjects = new Object[0];
-
-        /**
-         * Sets the user message.
-         *
-         * @param userMessage
-         *            the user message
-         * @return this builder
-         */
-        public LLMRequestBuilder userMessage(String userMessage) {
-            this.userMessage = userMessage;
-            return this;
-        }
-
-        /**
-         * Sets the attachments.
-         *
-         * @param attachments
-         *            the attachments
-         * @return this builder
-         */
-        public LLMRequestBuilder attachments(List<Attachment> attachments) {
-            this.attachments = attachments;
-            return this;
-        }
-
-        /**
-         * Sets the system prompt.
-         *
-         * @param systemPrompt
-         *            the system prompt
-         * @return this builder
-         */
-        public LLMRequestBuilder systemPrompt(String systemPrompt) {
-            this.systemPrompt = systemPrompt;
-            return this;
-        }
-
-        /**
-         * Sets the tools.
-         *
-         * @param tools
-         *            the tools
-         * @return this builder
-         */
-        public LLMRequestBuilder tools(Tool... tools) {
-            this.tools = tools;
-            return this;
-        }
-
-        
-
-        public LLMRequestBuilder toolObjects(Object[] toolObjects) {
-            this.toolObjects = toolObjects;
-            return this;
-        }
-
-        /**
-         * Builds the LLMRequest.
-         *
-         * @return the LLMRequest instance
-         */
-        public LLMRequest build() {
-            String finalUserMessage = userMessage;
-            List<Attachment> finalAttachments = attachments;
-            String finalSystemPrompt = systemPrompt;
-            Tool[] finalTools = tools;
-            Object[] finalToolObjects = toolObjects;
-
-            return new LLMRequest() {
-                @Override
-                public String userMessage() {
-                    return finalUserMessage;
-                }
-
-                @Override
-                public List<Attachment> attachments() {
-                    return finalAttachments;
-                }
-
-                @Override
-                public String systemPrompt() {
-                    return finalSystemPrompt;
-                }
-
-                @Override
-                public Tool[] tools() {
-                    return finalTools;
-                }
-
-                @Override
-                public Object[] toolObjects() {
-                    return finalToolObjects;
-                }
-            };
-        }
-    }
-
-    /**
-     * Represents an attachment file that can be sent to the LLM.
+     * Represents a file attachment that can be sent to the LLM for analysis.
+     * Attachments support various file types including images, documents, and
+     * text files. The LLM can analyze, reference, and answer questions about
+     * the attachment content.
      */
     interface Attachment extends Serializable {
         /**
          * Gets the file name.
          *
-         * @return the file name
+         * @return the file name including extension
          */
         String fileName();
 
         /**
-         * Gets the content type (MIME type).
+         * Gets the MIME content type.
          *
          * @return the content type
          */
@@ -293,37 +116,5 @@ public interface LLMProvider extends Serializable {
          * @return the file data
          */
         byte[] data();
-
-        /**
-         * Creates a new Attachment instance.
-         *
-         * @param fileName
-         *            the file name
-         * @param contentType
-         *            the content type
-         * @param data
-         *            the file data
-         * @return a new Attachment instance
-         */
-        static Attachment of(String fileName, String contentType,
-                byte[] data) {
-            return new Attachment() {
-                @Override
-                public String fileName() {
-                    return fileName;
-                }
-
-                @Override
-                public String contentType() {
-                    return contentType;
-                }
-
-                @Override
-                public byte[] data() {
-                    return data;
-                }
-            };
-        }
     }
-
 }

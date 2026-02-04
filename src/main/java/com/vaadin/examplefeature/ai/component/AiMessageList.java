@@ -13,19 +13,16 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.vaadin.examplefeature.ai.messagelist;
+package com.vaadin.examplefeature.ai.component;
 
 import java.io.Serializable;
 
 /**
- * Interface for components that can display a list of messages for AI
- * orchestrators.
- * <p>
- * Components implementing this interface can display messages in a conversation
- * format, allowing the AI orchestrator to add, update, and manage messages.
- * </p>
+ * Interface for message list components that can display AI conversation
+ * messages.
  *
  * @author Vaadin Ltd
+ * @see AiMessage
  */
 public interface AiMessageList extends Serializable {
 
@@ -33,7 +30,7 @@ public interface AiMessageList extends Serializable {
      * Adds a message to the list.
      *
      * @param message
-     *            the message to add
+     *            the message to add, not {@code null}
      */
     void addMessage(AiMessage message);
 
@@ -41,10 +38,10 @@ public interface AiMessageList extends Serializable {
      * Creates a new message with the given parameters.
      *
      * @param text
-     *            the message text
+     *            the initial message text
      * @param userName
-     *            the user name
-     * @return the created message
+     *            the name of the message sender, not {@code null}
+     * @return the created message instance, not {@code null}
      */
     AiMessage createMessage(String text, String userName);
 }

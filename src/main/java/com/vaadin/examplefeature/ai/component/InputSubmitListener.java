@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2025 Vaadin Ltd.
+ * Copyright 2000-2026 Vaadin Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.vaadin.examplefeature.ai.input;
+package com.vaadin.examplefeature.ai.component;
 
 import java.io.Serializable;
 
@@ -21,6 +21,8 @@ import java.io.Serializable;
  * Listener for input submit events.
  *
  * @author Vaadin Ltd
+ * @see AiInput
+ * @see InputSubmitEvent
  */
 @FunctionalInterface
 public interface InputSubmitListener extends Serializable {
@@ -29,7 +31,7 @@ public interface InputSubmitListener extends Serializable {
      * Called when the user submits input.
      *
      * @param event
-     *            the submit event
+     *            the submit event, not {@code null}
      */
     void onSubmit(InputSubmitEvent event);
 }
