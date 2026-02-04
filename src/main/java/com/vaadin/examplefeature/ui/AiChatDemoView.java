@@ -2,7 +2,6 @@ package com.vaadin.examplefeature.ui;
 
 import com.vaadin.flow.component.ai.orchestrator.AiOrchestrator;
 import com.vaadin.flow.component.ai.provider.LangChain4JLLMProvider;
-import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.messages.MessageInput;
 import com.vaadin.flow.component.messages.MessageList;
@@ -20,7 +19,6 @@ import dev.langchain4j.agent.tool.Tool;
 import dev.langchain4j.model.openai.OpenAiStreamingChatModel;
 
 @Route("vaadin-ai/ai-chat-demo")
-@CssImport("@vaadin/vaadin-lumo-styles/lumo.css")
 @Menu(order = 0, icon = "vaadin:clipboard-check", title = "AI Chat")
 public class AiChatDemoView extends UploadDropZone {
 
@@ -35,6 +33,7 @@ public class AiChatDemoView extends UploadDropZone {
         var messageList = new MessageList();
         messageList.setSizeFull();
         var messageInput = new MessageInput();
+        messageInput.setWidthFull();
 
         // Upload for attachments
         var uploadManager = new UploadManager(this);
@@ -43,10 +42,12 @@ public class AiChatDemoView extends UploadDropZone {
         uploadManager.setAcceptedFileTypes("image/*", "application/pdf",
                 "text/plain");
 
+        // Set upload manager to the drop zone
         setUploadManager(uploadManager);
 
         var uploadButton = new UploadButton(uploadManager);
         uploadButton.setIcon(VaadinIcon.UPLOAD.create());
+
         var inputLayout = new HorizontalLayout(uploadButton, messageInput);
         inputLayout.setWidthFull();
         inputLayout.setAlignItems(FlexComponent.Alignment.BASELINE);
@@ -54,7 +55,7 @@ public class AiChatDemoView extends UploadDropZone {
 
         var uploadFileList = new UploadFileList(uploadManager);
         uploadFileList.getElement().getStyle().setWidth("100%");
-        uploadFileList.addThemeName(UploadFileListVariant.LUMO_THUMBNAILS.getVariantName());
+        uploadFileList.addThemeVariants(UploadFileListVariant.LUMO_THUMBNAILS);
 
         var bottomLayout  = new VerticalLayout(uploadFileList, inputLayout);
 
