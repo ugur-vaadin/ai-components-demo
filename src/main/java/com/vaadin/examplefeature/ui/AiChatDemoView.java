@@ -1,12 +1,19 @@
 package com.vaadin.examplefeature.ui;
 
-import com.vaadin.examplefeature.ai.orchestrator.AiOrchestrator;
-import com.vaadin.examplefeature.ai.provider.langchain4j.LangChain4JLLMProvider;
+import com.vaadin.flow.component.ai.orchestrator.AiOrchestrator;
+import com.vaadin.flow.component.ai.provider.LangChain4JLLMProvider;
 import com.vaadin.flow.component.dependency.CssImport;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.messages.MessageInput;
 import com.vaadin.flow.component.messages.MessageList;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.component.upload.Upload;
+import com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment;
+import com.vaadin.flow.component.upload.UploadButton;
+import com.vaadin.flow.component.upload.UploadDropZone;
+import com.vaadin.flow.component.upload.UploadFileList;
+import com.vaadin.flow.component.upload.UploadFileListVariant;
+import com.vaadin.flow.component.upload.UploadManager;
 import com.vaadin.flow.router.Menu;
 import com.vaadin.flow.router.Route;
 import dev.langchain4j.agent.tool.Tool;
@@ -15,28 +22,46 @@ import dev.langchain4j.model.openai.OpenAiStreamingChatModel;
 @Route("vaadin-ai/ai-chat-demo")
 @CssImport("@vaadin/vaadin-lumo-styles/lumo.css")
 @Menu(order = 0, icon = "vaadin:clipboard-check", title = "AI Chat")
-public class AiChatDemoView extends VerticalLayout {
+public class AiChatDemoView extends UploadDropZone {
 
     public AiChatDemoView() {
         setSizeFull();
+
+        var layout = new VerticalLayout();
+        layout.setSizeFull();
+        add(layout);
 
         // Create UI components
         var messageList = new MessageList();
         messageList.setSizeFull();
         var messageInput = new MessageInput();
+        messageInput.setWidthFull();
 
-        // Upload Component for attachments
-        var upload = new Upload();
-        upload.setWidthFull();
-        upload.setMaxFiles(5);
-        upload.setMaxFileSize(5 * 1024 * 1024); // 5 MB
-        upload.setAcceptedFileTypes("image/*", "application/pdf",
+        // Upload for attachments
+        var uploadManager = new UploadManager(this);
+        uploadManager.setMaxFiles(5);
+        uploadManager.setMaxFileSize(5 * 1024 * 1024); // 5 MB
+        uploadManager.setAcceptedFileTypes("image/*", "application/pdf",
                 "text/plain");
-        upload.getElement().appendChild(messageInput.getElement());
 
-        add(messageList, upload);
-        setFlexGrow(1, messageList);
-        setFlexShrink(0, upload);
+        setUploadManager(uploadManager);
+
+        var uploadButton = new UploadButton(uploadManager);
+        uploadButton.setIcon(VaadinIcon.UPLOAD.create());
+        var inputLayout = new HorizontalLayout(uploadButton, messageInput);
+        inputLayout.setWidthFull();
+        inputLayout.setAlignItems(Alignment.BASELINE);
+        inputLayout.setSpacing(false);
+
+        var uploadFileList = new UploadFileList(uploadManager);
+        uploadFileList.getElement().getStyle().setWidth("100%");
+        uploadFileList.addThemeName(UploadFileListVariant.LUMO_THUMBNAILS.getVariantName());
+
+        var bottomLayout  = new VerticalLayout(uploadFileList, inputLayout);
+        
+        layout.add(messageList, bottomLayout);
+        layout.setFlexGrow(1, messageList);
+        layout.setFlexShrink(0, bottomLayout);
 
         // Create LLM provider
         var model = OpenAiStreamingChatModel.builder()
@@ -57,8 +82,8 @@ public class AiChatDemoView extends VerticalLayout {
         AiOrchestrator.builder(provider, systemPrompt)
                 .withMessageList(messageList)
                 .withInput(messageInput)
-                .withFileReceiver(upload)
-                .withVendorToolObjects(returnTools)
+                .withFileReceiver(uploadManager)
+                .withTools(returnTools)
                 .build();
     }
 
