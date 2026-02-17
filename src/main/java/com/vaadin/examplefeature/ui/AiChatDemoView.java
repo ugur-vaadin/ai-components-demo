@@ -1,6 +1,6 @@
 package com.vaadin.examplefeature.ui;
 
-import com.vaadin.flow.component.ai.orchestrator.AiOrchestrator;
+import com.vaadin.flow.component.ai.orchestrator.AIOrchestrator;
 import com.vaadin.flow.component.ai.provider.LangChain4JLLMProvider;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.messages.MessageInput;
@@ -27,7 +27,7 @@ public class AiChatDemoView extends UploadDropZone {
 
         var layout = new VerticalLayout();
         layout.setSizeFull();
-        add(layout);
+        setContent(layout);
 
         // Create UI components
         var messageList = new MessageList();
@@ -39,7 +39,7 @@ public class AiChatDemoView extends UploadDropZone {
         var uploadManager = new UploadManager(this);
         uploadManager.setMaxFiles(5);
         uploadManager.setMaxFileSize(5 * 1024 * 1024); // 5 MB
-        uploadManager.setAcceptedFileTypes("image/*", "application/pdf",
+        uploadManager.setAcceptedMimeTypes("image/*", "application/pdf",
                 "text/plain");
 
         // Set upload manager to the drop zone
@@ -79,7 +79,7 @@ public class AiChatDemoView extends UploadDropZone {
         var returnTools = new ReturnTools();
 
         // Create and configure orchestrator with input validation
-        AiOrchestrator.builder(provider, systemPrompt)
+        AIOrchestrator.builder(provider, systemPrompt)
                 .withMessageList(messageList)
                 .withInput(messageInput)
                 .withFileReceiver(uploadManager)
