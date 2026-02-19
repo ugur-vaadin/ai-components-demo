@@ -1,11 +1,17 @@
 # AI Components Demo README
 
-- [ ] TODO Replace or update this README with instructions relevant to your application
+## Prerequisites
+
+Set the `OPENAI_API_KEY` environment variable with your OpenAI API key before starting the application:
+
+```bash
+export OPENAI_API_KEY=your-api-key
+```
 
 ## Starting in Development Mode
 
-To start the application in development mode, import it into your IDE and run the `Application` class. 
-You can also start the application from the command line by running: 
+To start the application in development mode, import it into your IDE and run the `Application` class.
+You can also start the application from the command line by running:
 
 ```bash
 ./mvnw
@@ -33,5 +39,5 @@ docker build --secret id=proKey,src=$HOME/.vaadin/proKey .
 
 ## Next Steps
 
-The [Building Apps](https://vaadin.com/docs/v25/building-apps) guides contain hands-on advice for adding features to 
+The [Building Apps](https://vaadin.com/docs/v25/building-apps) guides contain hands-on advice for adding features to
 your application.
