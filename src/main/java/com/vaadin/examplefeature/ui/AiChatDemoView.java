@@ -1,7 +1,16 @@
 package com.vaadin.examplefeature.ui;
 
+import java.io.ByteArrayInputStream;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import com.vaadin.flow.component.ai.common.AIAttachment;
 import com.vaadin.flow.component.ai.orchestrator.AIOrchestrator;
 import com.vaadin.flow.component.ai.provider.LangChain4JLLMProvider;
+import com.vaadin.flow.component.dialog.Dialog;
+import com.vaadin.flow.component.html.Anchor;
+import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.messages.MessageInput;
 import com.vaadin.flow.component.messages.MessageList;
@@ -15,6 +24,8 @@ import com.vaadin.flow.component.upload.UploadFileListVariant;
 import com.vaadin.flow.component.upload.UploadManager;
 import com.vaadin.flow.router.Menu;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.server.streams.DownloadHandler;
+import com.vaadin.flow.server.streams.DownloadResponse;
 import dev.langchain4j.agent.tool.Tool;
 import dev.langchain4j.model.openai.OpenAiStreamingChatModel;
 
@@ -22,12 +33,18 @@ import dev.langchain4j.model.openai.OpenAiStreamingChatModel;
 @Menu(order = 0, icon = "vaadin:clipboard-check", title = "AI Chat")
 public class AiChatDemoView extends UploadDropZone {
 
+    private final Map<String, List<AIAttachment>> attachmentStore = new HashMap<>();
+    private final Anchor downloadAnchor = new Anchor();
+
     public AiChatDemoView() {
         setSizeFull();
 
         var layout = new VerticalLayout();
         layout.setSizeFull();
         setContent(layout);
+
+        downloadAnchor.getStyle().set("display", "none");
+        layout.add(downloadAnchor);
 
         // Create UI components
         var messageList = new MessageList();
@@ -55,7 +72,7 @@ public class AiChatDemoView extends UploadDropZone {
 
         var uploadFileList = new UploadFileList(uploadManager);
         uploadFileList.getElement().getStyle().setWidth("100%");
-        uploadFileList.addThemeVariants(UploadFileListVariant.LUMO_THUMBNAILS);
+        uploadFileList.addThemeVariants(UploadFileListVariant.THUMBNAILS);
 
         var bottomLayout  = new VerticalLayout(uploadFileList, inputLayout);
 
@@ -78,13 +95,58 @@ public class AiChatDemoView extends UploadDropZone {
         // Create return tools
         var returnTools = new ReturnTools();
 
-        // Create and configure orchestrator with input validation
+        // Create and configure orchestrator
         AIOrchestrator.builder(provider, systemPrompt)
                 .withMessageList(messageList)
                 .withInput(messageInput)
                 .withFileReceiver(uploadManager)
                 .withTools(returnTools)
+                .withAttachmentSubmitListener(e -> {
+                    attachmentStore.put(e.getMessageId(),
+                            e.getAttachments());
+                })
+                .withAttachmentClickListener(e -> {
+                    var attachments = attachmentStore
+                            .get(e.getMessageId());
+                    if (attachments == null) {
+                        return;
+                    }
+                    var attachment = attachments
+                            .get(e.getAttachmentIndex());
+                    if (attachment.mimeType().startsWith("image/")) {
+                        showImageDialog(attachment);
+                    } else {
+                        downloadFile(attachment);
+                    }
+                })
                 .build();
+    }
+
+    private void showImageDialog(AIAttachment attachment) {
+        var handler = DownloadHandler.fromInputStream(
+                event -> new DownloadResponse(
+                        new ByteArrayInputStream(attachment.data()),
+                        attachment.name(), attachment.mimeType(),
+                        attachment.data().length))
+                .inline();
+
+        var image = new Image(handler, attachment.name());
+        image.setMaxWidth("80vw");
+        image.setMaxHeight("80vh");
+
+        var dialog = new Dialog(image);
+        dialog.open();
+    }
+
+    private void downloadFile(AIAttachment attachment) {
+        var handler = DownloadHandler.fromInputStream(
+                event -> new DownloadResponse(
+                        new ByteArrayInputStream(attachment.data()),
+                        attachment.name(), attachment.mimeType(),
+                        attachment.data().length));
+
+        downloadAnchor.setHref(handler);
+        downloadAnchor.getElement().executeJs("this.click()");
     }
 
     /**
